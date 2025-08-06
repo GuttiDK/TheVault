@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TheVault.App.Services
+﻿namespace TheVault.App.Services
 {
-    internal interface IEncryptionService
+    public interface IEncryptionService
     {
+        void EncryptFile(string inputPath, string outputPath);
+        void DecryptFile(string inputPath, string outputPath);
     }
 }

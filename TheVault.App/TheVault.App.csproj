@@ -7,4 +7,13 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="vault.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="vault_notes\" />
+    <Folder Include="vault_files\" />
+  </ItemGroup>
+
 </Project>

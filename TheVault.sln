@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36401.2 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheVault.App", "TheVault.App\TheVault.App.csproj", "{36A04C62-9992-483D-AE16-BEFD07759735}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheVault.Tests", "TheVault.Tests\TheVault.Tests.csproj", "{9F342B7E-CC41-4750-B81F-E60E4ED50F53}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{36A04C62-9992-483D-AE16-BEFD07759735}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{36A04C62-9992-483D-AE16-BEFD07759735}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{36A04C62-9992-483D-AE16-BEFD07759735}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F342B7E-CC41-4750-B81F-E60E4ED50F53}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F342B7E-CC41-4750-B81F-E60E4ED50F53}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F342B7E-CC41-4750-B81F-E60E4ED50F53}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F342B7E-CC41-4750-B81F-E60E4ED50F53}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

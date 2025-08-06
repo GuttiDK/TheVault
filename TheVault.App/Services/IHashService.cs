@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TheVault.App.Services
+﻿namespace TheVault.App.Services
 {
-    internal interface IHashService
+    public interface IHashService
     {
+        string HashPassword(string password);
+        bool VerifyPassword(string password, string storedHash);
     }
 }
