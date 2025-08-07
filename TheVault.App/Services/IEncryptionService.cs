@@ -1,8 +1,10 @@
-﻿namespace TheVault.App.Services
+﻿using TheVault.App.Models;
+
+namespace TheVault.App.Services
 {
     public interface IEncryptionService
     {
-        void EncryptFile(string inputPath, string outputPath);
-        void DecryptFile(string inputPath, string outputPath);
+        void EncryptFile(FileOperationRequest request);
+        void DecryptFile(FileOperationRequest request);
     }
 }
