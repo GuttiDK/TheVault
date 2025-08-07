@@ -25,6 +25,15 @@ dotnet build
 4. Run the application:
 dotnet run --project TheVault.App
 
+## Default Password
+
+**The default password is: "Password"**
+
+You can change the password in the program's settings or by editing/deleting the `vault.json` file.
+
+> **Tip:**  
+> If you are unable to log in, simply delete the `vault.json` file. The next time you start the program, you will be prompted to set a new password.
+
 ### Usage
 
 1. On first run, set a master password.
