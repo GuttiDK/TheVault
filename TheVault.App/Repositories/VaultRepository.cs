@@ -1,14 +1,9 @@
 ﻿using System.Text.Json;
+using TheVault.App.Models;
 using TheVault.App.Services;
 
 namespace TheVault.App.Repositories
 {
-    public class VaultConfig
-    {
-        public string PasswordHash { get; set; } = "";
-        public List<string> Notes { get; set; } = [];
-    }
-
     public class VaultRepository
     {
         private const string ConfigFile = "vault.json";
@@ -32,13 +27,11 @@ namespace TheVault.App.Repositories
 
         private void SaveConfig()
         {
-            JsonSerializerOptions jsonSerializerOptions = new() { WriteIndented = true };
-            JsonSerializerOptions options = jsonSerializerOptions;
-            string json = JsonSerializer.Serialize(_config, options);
+            var json = JsonSerializer.Serialize(_config, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(ConfigFile, json);
         }
 
-        public bool PasswordExists() => !string.IsNullOrEmpty(_config.PasswordHash);
+        public bool PasswordExists() => !string.IsNullOrWhiteSpace(_config.PasswordHash);
 
         public void SavePasswordHash(string password)
         {
@@ -51,10 +44,24 @@ namespace TheVault.App.Repositories
             return _hashService.VerifyPassword(password, _config.PasswordHash);
         }
 
+        public void AddEncryptedFile(string encryptedFilePath)
+        {
+            if (!_config.EncryptedFiles.Contains(encryptedFilePath))
+            {
+                _config.EncryptedFiles.Add(encryptedFilePath);
+                SaveConfig();
+            }
+        }
+
+        public List<string> GetEncryptedFiles() => _config.EncryptedFiles;
+
         public void AddNote(string encryptedNotePath)
         {
-            _config.Notes.Add(encryptedNotePath);
-            SaveConfig();
+            if (!_config.Notes.Contains(encryptedNotePath))
+            {
+                _config.Notes.Add(encryptedNotePath);
+                SaveConfig();
+            }
         }
 
         public List<string> GetNotes() => _config.Notes;

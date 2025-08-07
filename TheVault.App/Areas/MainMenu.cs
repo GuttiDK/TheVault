@@ -9,7 +9,6 @@ namespace TheVault.App.Areas
         private readonly EncryptionService _encryptionService;
         private readonly VaultRepository _repo;
 
-        // Menu items for arrow navigation
         private readonly string[] _menuItems = new[]
         {
             "Tilføj fil",
@@ -17,6 +16,7 @@ namespace TheVault.App.Areas
             "Dekrypter fil",
             "Tilføj note",
             "Vis noter",
+            "Statistik",
             "Indstillinger",
             "Afslut"
         };
@@ -67,8 +67,9 @@ namespace TheVault.App.Areas
                         case 2: DecryptFile(); break;
                         case 3: AddNote(); break;
                         case 4: ShowNotes(); break;
-                        case 5: ShowSettings(); break;
-                        case 6: Console.WriteLine("Farvel 👋"); return;
+                        case 5: ShowStats(); break;
+                        case 6: ShowSettings(); break;
+                        case 7: Console.WriteLine("Farvel 👋"); return;
                     }
                 }
             }
@@ -107,6 +108,14 @@ namespace TheVault.App.Areas
             };
 
             _encryptionService.EncryptFile(request);
+
+            // Save encrypted file path for stats
+            string savedPath = System.IO.Path.Combine(
+                request.OutputPath ?? System.IO.Path.GetDirectoryName(request.InputPath) ?? System.IO.Directory.GetCurrentDirectory(),
+                request.OutputFileName ?? System.IO.Path.GetFileName(request.InputPath) + ".enc"
+            );
+            _repo.AddEncryptedFile(savedPath);
+
             Console.WriteLine("✅ Fil krypteret.");
             Console.WriteLine("Tryk på en vilkårlig tast for at vende tilbage til menuen...");
             Console.ReadKey();
@@ -115,17 +124,8 @@ namespace TheVault.App.Areas
         private void ShowEncryptedFiles()
         {
             Console.Clear();
-            Console.Write("Indtast mappe hvor dine krypterede filer ligger: ");
-            var folder = Console.ReadLine();
-            if (!Directory.Exists(folder))
-            {
-                Console.WriteLine("Mappen findes ikke.");
-                Console.WriteLine("Tryk på en vilkårlig tast for at vende tilbage til menuen...");
-                Console.ReadKey();
-                return;
-            }
-            var files = Directory.GetFiles(folder);
-            if (files.Length == 0)
+            var files = _repo.GetEncryptedFiles();
+            if (files.Count == 0)
             {
                 Console.WriteLine("Ingen krypterede filer fundet.");
                 Console.WriteLine("Tryk på en vilkårlig tast for at vende tilbage til menuen...");
@@ -135,7 +135,7 @@ namespace TheVault.App.Areas
 
             Console.WriteLine("Krypterede filer:");
             foreach (var file in files)
-                Console.WriteLine($"- {Path.GetFileName(file)}");
+                Console.WriteLine($"- {System.IO.Path.GetFileName(file)}");
 
             Console.WriteLine("\nTryk på en vilkårlig tast for at vende tilbage til menuen...");
             Console.ReadKey();
@@ -194,8 +194,8 @@ namespace TheVault.App.Areas
             Console.Write("Navn på krypteret note: ");
             var noteFileName = Console.ReadLine();
 
-            string tempNotePath = Path.GetTempFileName();
-            File.WriteAllText(tempNotePath, noteText);
+            string tempNotePath = System.IO.Path.GetTempFileName();
+            System.IO.File.WriteAllText(tempNotePath, noteText);
 
             var noteRequest = new FileOperationRequest
             {
@@ -205,12 +205,12 @@ namespace TheVault.App.Areas
             };
 
             _encryptionService.EncryptFile(noteRequest);
-            File.Delete(tempNotePath);
+            System.IO.File.Delete(tempNotePath);
 
-            // Save the note path for later retrieval
-            string savedNotePath = noteRequest.OutputPath ?? Path.GetDirectoryName(tempNotePath) ?? Directory.GetCurrentDirectory();
-            string savedNoteFile = noteRequest.OutputFileName ?? Path.GetFileName(tempNotePath) + ".enc";
-            _repo.AddNote(Path.Combine(savedNotePath, savedNoteFile));
+            // Save the note path for stats
+            string savedNotePath = noteRequest.OutputPath ?? System.IO.Path.GetDirectoryName(tempNotePath) ?? System.IO.Directory.GetCurrentDirectory();
+            string savedNoteFile = noteRequest.OutputFileName ?? System.IO.Path.GetFileName(tempNotePath) + ".enc";
+            _repo.AddNote(System.IO.Path.Combine(savedNotePath, savedNoteFile));
 
             Console.WriteLine("✅ Note krypteret og gemt.");
             Console.WriteLine("Tryk på en vilkårlig tast for at vende tilbage til menuen...");
@@ -234,18 +234,18 @@ namespace TheVault.App.Areas
             {
                 try
                 {
-                    string temp = Path.GetTempFileName();
+                    string temp = System.IO.Path.GetTempFileName();
                     var request = new FileOperationRequest
                     {
                         InputPath = notePath,
-                        OutputPath = Path.GetDirectoryName(temp),
-                        OutputFileName = Path.GetFileName(temp)
+                        OutputPath = System.IO.Path.GetDirectoryName(temp),
+                        OutputFileName = System.IO.Path.GetFileName(temp)
                     };
                     _encryptionService.DecryptFile(request);
-                    string content = File.ReadAllText(temp);
-                    File.Delete(temp);
+                    string content = System.IO.File.ReadAllText(temp);
+                    System.IO.File.Delete(temp);
 
-                    Console.WriteLine($"\n📄 {Path.GetFileName(notePath)}:\n{content}");
+                    Console.WriteLine($"\n📄 {System.IO.Path.GetFileName(notePath)}:\n{content}");
                 }
                 catch
                 {
@@ -256,13 +256,38 @@ namespace TheVault.App.Areas
             Console.ReadKey();
         }
 
+        private void ShowStats()
+        {
+            Console.Clear();
+            var files = _repo.GetEncryptedFiles();
+            var notes = _repo.GetNotes();
+            Console.WriteLine("Statistik:");
+            Console.WriteLine($"Antal krypterede filer: {files.Count}");
+            Console.WriteLine($"Antal noter: {notes.Count}");
+            Console.WriteLine("\nPlaceringer af krypterede filer:");
+            foreach (var f in files) Console.WriteLine($"- {f}");
+            Console.WriteLine("\nPlaceringer af noter:");
+            foreach (var n in notes) Console.WriteLine($"- {n}");
+            Console.WriteLine("\nTryk på en vilkårlig tast for at gå tilbage til menuen...");
+            Console.ReadKey();
+        }
+
         private void ShowSettings()
         {
             Console.Clear();
             Console.WriteLine("Indstillinger\n");
-            Console.WriteLine("Her kan du tilføje flere indstillinger senere.");
-            Console.WriteLine("\nTryk på en vilkårlig tast for at gå tilbage til menuen...");
-            Console.ReadKey();
+            Console.WriteLine("1. Skift hovedkodeord");
+            Console.WriteLine("2. Tilbage til menuen");
+            var key = Console.ReadKey(true);
+            if (key.KeyChar == '1')
+            {
+                Console.Write("\nIndtast nyt hovedkodeord: ");
+                var newPassword = Console.ReadLine();
+                _repo.SavePasswordHash(newPassword);
+                Console.WriteLine("✅ Hovedkodeordet er ændret.");
+                Console.WriteLine("Tryk på en vilkårlig tast for at gå tilbage...");
+                Console.ReadKey();
+            }
         }
     }
 }
