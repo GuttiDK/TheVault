@@ -5,7 +5,7 @@ using TheVault.App.Services;
 Directory.CreateDirectory("vault_files");
 Directory.CreateDirectory("vault_notes");
 
-Console.WriteLine("Velkommen til ConsoleVault!");
+Console.WriteLine("Velkommen til TheVault!");
 
 Console.Write("Indtast master password: ");
 var password = Console.ReadLine();
