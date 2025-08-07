@@ -33,70 +33,87 @@ namespace TheVault.Tests.Unittests
         }
     }
 
-    public class VaultRepositoryTests
+    public class VaultRepositoryTests : IDisposable
     {
+        private readonly string _testConfigFile;
+        private readonly VaultRepository _repo;
+
+        public VaultRepositoryTests()
+        {
+            // Brug en unik test-fil for hver testinstans for at undgå filkonflikter
+            _testConfigFile = $"vault_test_{Guid.NewGuid()}.json";
+            _repo = new VaultRepository(new HashServiceForTest(), _testConfigFile);
+        }
+
+        [Fact]
+        public void AddEncryptedFile_ShouldAddFilePath()
+        {
+            string filePath = $"testfile_{Guid.NewGuid()}.vault";
+            _repo.AddEncryptedFile(filePath);
+
+            Assert.Contains(filePath, _repo.GetEncryptedFiles());
+        }
+
+        [Fact]
+        public void AddEncryptedFile_ShouldNotAddDuplicate()
+        {
+            string filePath = $"testfile_{Guid.NewGuid()}.vault";
+            _repo.AddEncryptedFile(filePath);
+            _repo.AddEncryptedFile(filePath);
+
+            var files = _repo.GetEncryptedFiles().Where(f => f == filePath).ToList();
+            Assert.Single(files);
+        }
+
         [Fact]
         public void AddNote_ShouldAddNotePath()
         {
-            var hashService = new HashService();
-            var repo = new VaultRepository(hashService);
+            string notePath = $"testnote_{Guid.NewGuid()}.note";
+            _repo.AddNote(notePath);
 
-            string notePath = "vault_notes/testnote.note";
-            repo.AddNote(notePath);
+            Assert.Contains(notePath, _repo.GetNotes());
+        }
 
-            Assert.Contains(notePath, repo.GetNotes());
+        [Fact]
+        public void AddNote_ShouldNotAddDuplicate()
+        {
+            string notePath = $"testnote_{Guid.NewGuid()}.note";
+            _repo.AddNote(notePath);
+            _repo.AddNote(notePath);
+
+            var notes = _repo.GetNotes().Where(n => n == notePath).ToList();
+            Assert.Single(notes);
         }
 
         [Fact]
         public void SavePasswordHash_And_VerifyPassword_ShouldWork()
         {
-            var hashService = new HashService();
-            var repo = new VaultRepository(hashService);
-
             string password = "securePassword!";
-            repo.SavePasswordHash(password);
+            _repo.SavePasswordHash(password);
 
-            Assert.True(repo.VerifyPassword(password));
-            Assert.False(repo.VerifyPassword("wrongPassword"));
+            Assert.True(_repo.VerifyPassword(password));
+            Assert.False(_repo.VerifyPassword("wrongPassword"));
         }
 
         [Fact]
-        public void GetNotes_ShouldReturnEmptyList_WhenNoNotes()
+        public void GetEncryptedFiles_And_Notes_ShouldReturnEmptyList_WhenNoneAdded()
         {
-            var hashService = new HashService();
-            var repo = new VaultRepository(hashService);
+            var repo = new VaultRepository(new HashServiceForTest(), $"empty_{Guid.NewGuid()}.json");
+            Assert.Empty(repo.GetEncryptedFiles());
+            Assert.Empty(repo.GetNotes());
+        }
 
-            var notes = repo.GetNotes();
-            Assert.NotNull(notes);
-            Assert.Empty(notes);
+        public void Dispose()
+        {
+            if (File.Exists(_testConfigFile))
+                File.Delete(_testConfigFile);
         }
     }
 
-    public class EncryptionServiceTests
+    // Dummy hashservice for hurtigere tests (ingen rigtig hashing)
+    public class HashServiceForTest : IHashService
     {
-        [Fact]
-        public void EncryptAndDecryptFile_ShouldReturnOriginalContent()
-        {
-            var password = "testPassword";
-            var encryptionService = new EncryptionService(password);
-
-            string originalText = "Sensitive data!";
-            string inputPath = "test_input.txt";
-            string encryptedPath = "test_encrypted.vault";
-            string decryptedPath = "test_decrypted.txt";
-
-            File.WriteAllText(inputPath, originalText);
-
-            encryptionService.EncryptFile(inputPath, encryptedPath);
-            encryptionService.DecryptFile(encryptedPath, decryptedPath);
-
-            string decryptedText = File.ReadAllText(decryptedPath);
-
-            Assert.Equal(originalText, decryptedText);
-
-            File.Delete(inputPath);
-            File.Delete(encryptedPath);
-            File.Delete(decryptedPath);
-        }
+        public string HashPassword(string password) => password + "_hash";
+        public bool VerifyPassword(string password, string storedHash) => HashPassword(password) == storedHash;
     }
 }

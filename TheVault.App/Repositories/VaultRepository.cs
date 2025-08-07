@@ -6,29 +6,30 @@ namespace TheVault.App.Repositories
 {
     public class VaultRepository
     {
-        private const string ConfigFile = "vault.json";
+        private readonly string _configFile;
         private readonly IHashService _hashService;
         private VaultConfig _config;
 
-        public VaultRepository(IHashService hashService)
+        public VaultRepository(IHashService hashService, string? configFile = null)
         {
             _hashService = hashService;
+            _configFile = string.IsNullOrWhiteSpace(configFile) ? "vault.json" : configFile;
             _config = LoadConfig();
         }
 
         private VaultConfig LoadConfig()
         {
-            if (!File.Exists(ConfigFile))
+            if (!File.Exists(_configFile))
                 return new VaultConfig();
 
-            var json = File.ReadAllText(ConfigFile);
+            var json = File.ReadAllText(_configFile);
             return JsonSerializer.Deserialize<VaultConfig>(json) ?? new VaultConfig();
         }
 
         private void SaveConfig()
         {
             var json = JsonSerializer.Serialize(_config, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(ConfigFile, json);
+            File.WriteAllText(_configFile, json);
         }
 
         public bool PasswordExists() => !string.IsNullOrWhiteSpace(_config.PasswordHash);
