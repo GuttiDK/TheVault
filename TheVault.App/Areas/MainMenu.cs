@@ -6,9 +6,15 @@ namespace TheVault.App.Areas
 {
     public class MainMenu
     {
+        // EncryptionService handles all file encryption/decryption using AES.
+        // It derives a key and IV from the user's password, so files are only accessible with the correct password.
         private readonly EncryptionService _encryptionService;
+
+        // VaultRepository manages persistent storage, including password hashes and file/note lists.
+        // It uses IHashService for secure password hashing and verification.
         private readonly VaultRepository _repo;
 
+        // Menu items for the main menu UI
         private readonly string[] _menuItems = new[]
         {
             "Tilføj fil",
@@ -27,6 +33,10 @@ namespace TheVault.App.Areas
             _repo = repo;
         }
 
+        /// <summary>
+        /// Displays the main menu and handles user navigation and selection.
+        /// Uses a loop to allow keyboard navigation and executes the selected action.
+        /// </summary>
         public void Show()
         {
             int selected = 0;
@@ -60,6 +70,7 @@ namespace TheVault.App.Areas
                 }
                 else if (key.Key == ConsoleKey.Enter)
                 {
+                    // Each case calls a method that handles the selected menu action
                     switch (selected)
                     {
                         case 0: AddFile(); break;
@@ -75,6 +86,12 @@ namespace TheVault.App.Areas
             }
         }
 
+        /// <summary>
+        /// Handles file encryption workflow:
+        /// - Prompts user for file path and output options
+        /// - Uses EncryptionService to encrypt the file
+        /// - Registers the encrypted file in the repository for tracking/statistics
+        /// </summary>
         private void AddFile()
         {
             Console.Clear();
@@ -107,9 +124,10 @@ namespace TheVault.App.Areas
                 OutputFileName = string.IsNullOrWhiteSpace(outputFileName) ? null : outputFileName
             };
 
+            // Advanced: Encrypts the file using AES and stores the result at the chosen location
             _encryptionService.EncryptFile(request);
 
-            // Save encrypted file path for stats
+            // Advanced: Tracks the encrypted file in the repository for later statistics and management
             string savedPath = System.IO.Path.Combine(
                 request.OutputPath ?? System.IO.Path.GetDirectoryName(request.InputPath) ?? System.IO.Directory.GetCurrentDirectory(),
                 request.OutputFileName ?? System.IO.Path.GetFileName(request.InputPath) + ".enc"
@@ -141,6 +159,10 @@ namespace TheVault.App.Areas
             Console.ReadKey();
         }
 
+        /// <summary>
+        /// Decrypts a file using the EncryptionService.
+        /// If the password is wrong, decryption will fail or produce unreadable output.
+        /// </summary>
         private void DecryptFile()
         {
             Console.Clear();
@@ -178,6 +200,12 @@ namespace TheVault.App.Areas
             Console.ReadKey();
         }
 
+        /// <summary>
+        /// Handles note creation and encryption:
+        /// - Prompts user for note text and output options
+        /// - Writes note to a temporary file, encrypts it, and deletes the temp file
+        /// - Registers the encrypted note in the repository
+        /// </summary>
         private void AddNote()
         {
             Console.Clear();
@@ -194,6 +222,7 @@ namespace TheVault.App.Areas
             Console.Write("Navn på krypteret note: ");
             var noteFileName = Console.ReadLine();
 
+            // Advanced: Uses a temp file to store the note before encryption
             string tempNotePath = System.IO.Path.GetTempFileName();
             System.IO.File.WriteAllText(tempNotePath, noteText);
 
@@ -207,7 +236,7 @@ namespace TheVault.App.Areas
             _encryptionService.EncryptFile(noteRequest);
             System.IO.File.Delete(tempNotePath);
 
-            // Save the note path for stats
+            // Advanced: Registers the encrypted note for later retrieval and statistics
             string savedNotePath = noteRequest.OutputPath ?? System.IO.Path.GetDirectoryName(tempNotePath) ?? System.IO.Directory.GetCurrentDirectory();
             string savedNoteFile = noteRequest.OutputFileName ?? System.IO.Path.GetFileName(tempNotePath) + ".enc";
             _repo.AddNote(System.IO.Path.Combine(savedNotePath, savedNoteFile));
@@ -217,6 +246,12 @@ namespace TheVault.App.Areas
             Console.ReadKey();
         }
 
+        /// <summary>
+        /// Decrypts and displays all notes by:
+        /// - Decrypting each note to a temp file
+        /// - Reading and displaying the content
+        /// - Cleaning up temp files after use
+        /// </summary>
         private void ShowNotes()
         {
             Console.Clear();
@@ -234,6 +269,7 @@ namespace TheVault.App.Areas
             {
                 try
                 {
+                    // Advanced: Decrypts each note to a temp file for secure, temporary access
                     string temp = System.IO.Path.GetTempFileName();
                     var request = new FileOperationRequest
                     {
@@ -256,6 +292,11 @@ namespace TheVault.App.Areas
             Console.ReadKey();
         }
 
+        /// <summary>
+        /// Shows statistics about encrypted files and notes:
+        /// - Displays counts and locations of encrypted files and notes
+        /// - Provides insight into the user's storage usage
+        /// </summary>
         private void ShowStats()
         {
             Console.Clear();
@@ -272,6 +313,10 @@ namespace TheVault.App.Areas
             Console.ReadKey();
         }
 
+        /// <summary>
+        /// Allows the user to change the master password.
+        /// The new password is hashed and stored securely via the repository.
+        /// </summary>
         private void ShowSettings()
         {
             Console.Clear();
@@ -283,6 +328,7 @@ namespace TheVault.App.Areas
             {
                 Console.Write("\nIndtast nyt hovedkodeord: ");
                 var newPassword = Console.ReadLine();
+                // Advanced: Hashes and saves the new password securely
                 _repo.SavePasswordHash(newPassword);
                 Console.WriteLine("✅ Hovedkodeordet er ændret.");
                 Console.WriteLine("Tryk på en vilkårlig tast for at gå tilbage...");
